@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="user-scalable=yes">
+    <title>مشغل البث المباشر</title>
+    <style>
+        /* تحويل الصفحة لمشغل فقط بدون هوامش */
+        body {
+            background-color: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* شريط التحكم العلوي للمشغل */
+        .player-header {
+            background-color: #111;
+            border-bottom: 2px solid #222;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-btn {
+            background-color: #f39c12;
+            color: #000;
+            border: none;
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap; 
+        }
+
+        /* توحيد كل زراير التحكم العلوية */
+        .nav-btn, .rotate-btn, .adblock-btn, .close-top-btn, .external-top-btn, .copy-top-btn {
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        /* ألوان الزراير المتخصصة */
+        .nav-btn { background-color: #3498db; }
+        .nav-btn:hover { background-color: #2980b9; }
+
+        .rotate-btn { background-color: #9b59b6; }
+        .rotate-btn:hover { background-color: #8e44ad; }
+
+        .close-top-btn { background-color: #c0392b; }
+        .close-top-btn:hover { background-color: #e74c3c; }
+
+        .external-top-btn { background-color: #8e44ad; }
+        .external-top-btn:hover { background-color: #9b59b6; }
+
+        /* زرار النسخ الجديد */
+        .copy-top-btn { background-color: #f39c12; color: #000; }
+        .copy-top-btn:hover { background-color: #e67e22; color: white; }
+
+        .adblock-btn { background-color: #27ae60; }
+        .adblock-btn.disabled { background-color: #c0392b; }
+
+        /* شريط القنوات قابل للتمرير */
+        .tabs-container {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 5px;
+        }
+        
+        .tabs-container::-webkit-scrollbar { height: 6px; }
+        .tabs-container::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+
+        .tab-btn {
+            background-color: #008b8b;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+
+        .tab-btn.active {
+            background-color: #004d4d;
+            border: 1px solid #fff;
+        }
+
+        /* تعديل الفيديو */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            background-color: #000;
+        }
+
+        .video-wrapper.rotated iframe {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: calc(100vh - 75px);
+            height: 100vw;
+            transform: translate(-50%, -50%) rotate(90deg);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* لوحة التعديل */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: #222;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 450px;
+            border: 1px solid #444;
+            color: white;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #ccc; font-size: 14px;}
+        .form-group input, .form-group select {
+            width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555;
+            background-color: #333; color: white; box-sizing: border-box;
+        }
+
+        .modal-buttons { display: flex; gap: 10px; margin-bottom: 15px; }
+        .action-btn { flex: 1; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
+        
+        .save-btn { background-color: #27ae60; } 
+        .delete-btn { background-color: #e74c3c; } 
+        .close-btn { background-color: #7f8c8d; } 
+        
+        .export-section {
+            border-top: 1px solid #444;
+            padding-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .add-channel-btn { background-color: #d35400; color: white; width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        .download-btn { background-color: #2980b9; color: white; flex: 1; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .copy-btn { background-color: #8e44ad; color: white; flex: 1; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        /* تنسيقات زرار الاكتشاف الجديد اللي ضفناها */
+        .tools-container {
+            display: flex;
+            justify-content: center;
+            padding: 5px 0;
+        }
+
+        .auto-fetch-btn {
+            background-color: #e67e22; 
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5); 
+        }
+
+        .auto-fetch-btn:hover {
+            background-color: #d35400; 
+        }
+
+        .auto-fetch-btn:disabled {
+            background-color: #7f8c8d;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+    </style>
+<style>:is([id*='google_ads_iframe'],[id*='taboola-'],.taboolaHeight,.taboola-placeholder,#top-ad,#credential_picker_container,#credentials-picker-container,#credential_picker_iframe,[id*='google-one-tap-iframe'],#google-one-tap-popup-container,.google-one-tap__module,.google-one-tap-modal-div,#amp_floatingAdDiv,#ez-content-blocker-container) {display:none!important;min-height:0!important;height:0!important;}</style><style>:is([id*='google_ads_iframe'],[id*='taboola-'],.taboolaHeight,.taboola-placeholder,#top-ad,#credential_picker_container,#credentials-picker-container,#credential_picker_iframe,[id*='google-one-tap-iframe'],#google-one-tap-popup-container,.google-one-tap__module,.google-one-tap-modal-div,#amp_floatingAdDiv,#ez-content-blocker-container) {display:none!important;min-height:0!important;height:0!important;}</style><style>:is([id*='google_ads_iframe'],[id*='taboola-'],.taboolaHeight,.taboola-placeholder,#top-ad,#credential_picker_container,#credentials-picker-container,#credential_picker_iframe,[id*='google-one-tap-iframe'],#google-one-tap-popup-container,.google-one-tap__module,.google-one-tap-modal-div,#amp_floatingAdDiv,#ez-content-blocker-container) {display:none!important;min-height:0!important;height:0!important;}</style><style>:is([id*='google_ads_iframe'],[id*='taboola-'],.taboolaHeight,.taboola-placeholder,#top-ad,#credential_picker_container,#credentials-picker-container,#credential_picker_iframe,[id*='google-one-tap-iframe'],#google-one-tap-popup-container,.google-one-tap__module,.google-one-tap-modal-div,#amp_floatingAdDiv,#ez-content-blocker-container) {display:none!important;min-height:0!important;height:0!important;}</style></head>
+<body>
+
+    <div class="player-header">
+        <div class="top-controls">
+            <button class="admin-btn" onclick="openModal()">⚙️ التعديل</button>
+            
+            <div class="nav-buttons">
+                <button id="closeVid" class="close-top-btn" onclick="closePlayer()" style="display: none;">إغلاق ✖</button>
+                <button id="externalVid" class="external-top-btn" onclick="openExternal()" style="display: none;">خارجي ↗</button>
+                <button id="copyLinkBtn" class="copy-top-btn" onclick="copyCurrentLink()" style="display: none;">نسخ الرابط 🔗</button>
+                
+                <button class="nav-btn" onclick="prevStream()">الســـــــــــــــــــابق ⏮️</button>
+                <button class="nav-btn" onclick="nextStream()">التـــــــــــــــــــــــــــــــــــــــــــــالي ⏭️</button>
+                <button class="rotate-btn" onclick="toggleRotation()">تدوير 🔄</button>
+            </div>
+
+            <button id="adblockBtn" class="adblock-btn" onclick="toggleAdBlock()">🛡️ المانع (شغال)</button>
+        </div>
+
+        <div class="tabs-container" id="mainTabs">
+            <button id="btn_new_1775318967644" class="tab-btn" data-link="https://livetv.aflam4you.net/zremb472.php?vid=68&amp;aflam_s=1&amp;aflam_w=360&amp;aflam_h=250&amp;aflam_k=11623324" onclick="playStream(this)">BEIN 1</button><button id="btn1" class="tab-btn" data-link="https://t.gwoo.online/albaplayer/bein1" onclick="playStream(this)">قناة 1 بس</button><button id="btn1" class="tab-btn" data-link="https://15.wwwkoora.com/albaplayer/bein-sports-hd-1/" onclick="playStream(this)">قناة 1 بس</button><button class="auto-fetch-btn" id="autoFetchBtn" onclick="playRandomSportsChannel()">
+                ⚽ اكتشاف قناة رياضية من النت
+            </button>
+            <button id="btn2" class="tab-btn" data-link="https://p4.panda-live.live/albaplayer/bein-1/" onclick="playStream(this)">1</button>
+            <button id="btn3" class="tab-btn" data-link="https://tv12.koora-plus.top/chtv/ch1.php" onclick="playStream(this)">1</button>
+            <button id="btn4" class="tab-btn hd" data-link="https://12.sportsurges.online/albaplayer/bein-1/?serv=1" onclick="playStream(this)">1</button>
+            <button id="btn_new_1775313046421" class="tab-btn" data-link="https://plir.bein4kora.com/albaplayer/1bnnn1/" onclick="playStream(this)">1</button>
+            <button id="btn_new_1775313087333" class="tab-btn" data-link="https://1.simosports.live/splayer/Live1.php" onclick="playStream(this)">1</button>
+            <button id="btn_new_1775313110293" class="tab-btn" data-link="https://spoort.en-yalla.live/albaplayer/sport1/" onclick="playStream(this)">1</button>
+            <button id="btn_new_1775313127961" class="tab-btn" data-link="https://bbb.yallashoot2026.com/albaplayer/sports-1/" onclick="playStream(this)">1</button>
+            
+            <button id="btn_new_1775313162951" class="tab-btn" data-link="https://vip.kora-top.zip/frame.php?ch=b1&amp;p=12&amp;token=3ee4a19b-5195-4718-9f39-1641c06163cf&amp;kt=1774719427" onclick="playStream(this)">1</button><button id="externalVid" class="external-vid-btn" onclick="openExternal()" title="فتح في نافذة خارجية" style="display: none;">↗️</button><button id="closeVid" class="close-vid-btn" onclick="closePlayer()" title="إغلاق المشغل" style="display: none;">✖</button>
+        <button id="btn_new_1775318967644" class="tab-btn" data-link="https://livetv.aflam4you.net/zremb472.php?vid=68&amp;aflam_s=1&amp;aflam_w=360&amp;aflam_h=250&amp;aflam_k=11623324" onclick="playStream(this)">1 1 1</button><button id="btn_new_1775327957708" class="tab-btn" data-link="https://tv.alfajertv.com/4/?channel=fajer1" onclick="playStream(this)">Fajr 1</button><button id="btn_new_1775330180314" class="tab-btn" data-link="https://a1.kora-plus.dad/watch/b1.m3u8" onclick="playStream(this)">1 1 1  1 1 1</button><button id="btn_new_1775330436423" class="tab-btn" data-link="https://a4.kora-plus.dad/watch/alwan1.m3u8" onclick="playStream(this)">Alw 1</button><button id="btn_new_1775398220157" class="tab-btn" data-link="https://koora-lives.mov/" onclick="playStream(this)">live site</button><button id="btn_new_1775572087566_0" class="tab-btn" data-link="https://2.simosports.live/splayer/Live1.php" onclick="playStream(this)">+  1</button><button id="btn_new_1775572087566_1" class="tab-btn" data-link="https://12.sportsurges.online/albaplayer/bein-1/" onclick="playStream(this)">+  2</button><button id="btn_new_1775572087566_2" class="tab-btn" data-link="https://tv20.koora-plus.top/chtv/ch1.php" onclick="playStream(this)">+  3</button><button id="btn_new_1775594010112_0" class="tab-btn" data-link="https://live.kora-top.zip/frame.php?ch=b1&amp;p=12&amp;token=f518a3d3-5345-4e09-8296-a6177bb341bf&amp;kt=1775593602" onclick="playStream(this)">++ 1</button><button id="btn_new_1775594010112_1" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f6c6976652e62616b656d65616c732e636f6d2f636830312e68746d6c&amp;s=1" onclick="playStream(this)">++ 2</button><button id="btn_new_1775594010112_2" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f7777312e73706f7274737a6f6e6c696e652e636c69636b2f6368616e6e656c732f70742f656c6576656e312e706870&amp;s=1" onclick="playStream(this)">++ 3</button><button id="btn_new_1775594010112_3" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f73747265616d732e63656e7465722f656d6265642f636831312e706870&amp;s=1" onclick="playStream(this)">++ 4</button><button id="btn_new_1775594010112_4" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f7777312e73706f7274737a6f6e6c696e652e636c69636b2f6368616e6e656c732f68642f6864332e706870&amp;s=1" onclick="playStream(this)">++ 5</button><button id="btn_new_1775594010112_5" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f73747265616d732e63656e7465722f656d6265642f6368362e706870&amp;s=1" onclick="playStream(this)">++ 6</button><button id="btn_new_1775594010112_6" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f73747265616d732e63656e7465722f656d6265642f636831302e706870&amp;s=1" onclick="playStream(this)">++ 7</button><button id="btn_new_1775594010112_7" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f706c61797265706f72742e6c696e6b2f686f6d65732f626c6f67312f&amp;s=1" onclick="playStream(this)">++ 8</button><button id="btn_new_1775594010112_8" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f73747265616d732e63656e7465722f656d6265642f6368312e706870&amp;s=1" onclick="playStream(this)">++ 9</button><button id="btn_new_1775594010112_9" class="tab-btn" data-link="https://live.kora-top.zip/frame.php?ch=aust2&amp;p=12&amp;token=f518a3d3-5345-4e09-8296-a6177bb341bf&amp;kt=1775593784" onclick="playStream(this)">++ 10</button><button id="btn_new_1775594010112_10" class="tab-btn" data-link="https://live.kora-top.zip/frame.php?ch=tnt1&amp;p=12&amp;token=f518a3d3-5345-4e09-8296-a6177bb341bf&amp;kt=1775593810" onclick="playStream(this)">++ 11</button><button id="btn_new_1775678758840_0" class="tab-btn" data-link="https://vip.kora-top.zip/frame.php?ch=tnt1&amp;p=12&amp;token=82562b4a-c7e9-45fb-ba4b-14fbae524297&amp;kt=1775678199" onclick="playStream(this)">- 1</button><button id="btn_new_1775678758840_1" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f73742e63686174616e676f2e636f6d2f68352f677a2f72303430363236313034362f69642e68746d6c&amp;s=1" onclick="playStream(this)">- 2</button><button id="btn_new_1775678758840_2" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f73747265616d732e63656e7465722f656d6265642f6368312e706870&amp;s=1" onclick="playStream(this)">- 3</button><button id="btn_new_1775678758840_3" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f73747265616d732e63656e7465722f656d6265642f6368332e706870&amp;s=1" onclick="playStream(this)">- 4</button><button id="btn_new_1775678758840_4" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f73747265616d732e63656e7465722f656d6265642f636831322e706870&amp;s=1" onclick="playStream(this)">- 5</button><button id="btn_new_1775678758840_5" class="tab-btn" data-link="https://score808.app/share/stream0.php?token=68747470733a2f2f687265662e6c692f3f68747470733a2f2f6c6976652e62616b656d65616c732e636f6d2f636830312e68746d6c&amp;s=1" onclick="playStream(this)">- 6</button><button id="btn_new_1775678758840_6" class="tab-btn" data-link="https://vip.kora-top.zip/frame.php?ch=b1&amp;p=12&amp;token=82562b4a-c7e9-45fb-ba4b-14fbae524297&amp;kt=1775678298" onclick="playStream(this)">- 7</button><button id="btn_new_1775678758840_7" class="tab-btn" data-link="https://vip.kora-top.zip/frame.php?ch=b1&amp;p=12&amp;token=82562b4a-c7e9-45fb-ba4b-14fbae524297&amp;kt=1775678311" onclick="playStream(this)">- 8</button><button id="btn_new_1775678758840_8" class="tab-btn" data-link="https://a2.kora-plus.dad/watch/b1-1823.ts" onclick="playStream(this)">- 9</button></div>
+    </div>
+
+    <div class="video-wrapper">
+        <iframe id="videoPlayer" src="" allowfullscreen="" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+
+    <div id="settingsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 style="margin-top:0">إعدادات البث المباشر</h3>
+            
+            <div class="form-group">
+                <label>اختار الزرار للتعديل أو الحذف:</label>
+                <select id="buttonSelect" onchange="loadButtonData()" data-ddg-inputtype="unknown"><option value="btn_new_1775318967644">BEIN 1</option><option value="btn1">قناة 1 بس</option><option value="btn1">قناة 1 بس</option><option value="btn2">1</option><option value="btn3">1</option><option value="btn4">1</option><option value="btn_new_1775313046421">1</option><option value="btn_new_1775313087333">1</option><option value="btn_new_1775313110293">1</option><option value="btn_new_1775313127961">1</option><option value="btn_new_1775313162951">1</option><option value="btn_new_1775318967644">1 1 1</option><option value="btn_new_1775327957708">Fajr 1</option><option value="btn_new_1775330180314">1 1 1 1 1 1</option><option value="btn_new_1775330436423">Alw 1</option><option value="btn_new_1775398220157">live site</option><option value="btn_new_1775572087566_0">+ 1</option><option value="btn_new_1775572087566_1">+ 2</option><option value="btn_new_1775572087566_2">+ 3</option><option value="btn_new_1775594010112_0">++ 1</option><option value="btn_new_1775594010112_1">++ 2</option><option value="btn_new_1775594010112_2">++ 3</option><option value="btn_new_1775594010112_3">++ 4</option><option value="btn_new_1775594010112_4">++ 5</option><option value="btn_new_1775594010112_5">++ 6</option><option value="btn_new_1775594010112_6">++ 7</option><option value="btn_new_1775594010112_7">++ 8</option><option value="btn_new_1775594010112_8">++ 9</option><option value="btn_new_1775594010112_9">++ 10</option><option value="btn_new_1775594010112_10">++ 11</option><option value="btn_new_1775678758840_0">- 1</option><option value="btn_new_1775678758840_1">- 2</option><option value="btn_new_1775678758840_2">- 3</option><option value="btn_new_1775678758840_3">- 4</option><option value="btn_new_1775678758840_4">- 5</option><option value="btn_new_1775678758840_5">- 6</option><option value="btn_new_1775678758840_6">- 7</option><option value="btn_new_1775678758840_7">- 8</option><option value="btn_new_1775678758840_8">- 9</option></select>
+            </div>
+
+            <div class="form-group">
+                <label>الاسم الجديد:</label>
+                <input type="text" id="editName" data-ddg-inputtype="unknown">
+            </div>
+
+            <div class="form-group">
+                <label>اللينك الجديد:</label>
+                <input type="text" id="editLink" data-ddg-inputtype="unknown">
+            </div>
+
+            <div class="modal-buttons">
+                <button class="action-btn save-btn" onclick="applyChanges()">تطبيق التعديل</button>
+                <button class="action-btn delete-btn" onclick="deleteChannel()">حذف القناة</button>
+                <button class="action-btn close-btn" onclick="closeModal()">إغلاق</button>
+            </div>
+
+            <div class="export-section">
+                <button class="add-channel-btn" onclick="addNewChannel()">➕ إضافة قناة بث جديدة</button>
+                <button class="download-btn" onclick="downloadFullFile()">💾 حفظ الملف</button>
+                <button class="copy-btn" onclick="copyFullCode()">📋 نسخ الكود</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function populateSelectMenu() {
+            const selectMenu = document.getElementById('buttonSelect');
+            selectMenu.innerHTML = ''; 
+            document.querySelectorAll('#mainTabs .tab-btn').forEach(btn => {
+                let opt = document.createElement('option');
+                opt.value = btn.id;
+                opt.innerText = btn.innerText;
+                selectMenu.appendChild(opt);
+            });
+        }
+        populateSelectMenu();
+
+        window.onload = function() {
+            let firstBtn = document.querySelector('#mainTabs .tab-btn');
+            if(firstBtn) playStream(firstBtn);
+            populateSelectMenu();
+        };
+
+        let adblockEnabled = true;
+        function toggleAdBlock() {
+            let iframe = document.getElementById('videoPlayer');
+            let btn = document.getElementById('adblockBtn');
+            adblockEnabled = !adblockEnabled;
+            
+            if (adblockEnabled) {
+                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+                btn.innerText = '🛡️ المانع (شغال)';
+                btn.classList.remove('disabled');
+            } else {
+                iframe.removeAttribute('sandbox');
+                btn.innerText = '🛡️ المانع (مقفول)';
+                btn.classList.add('disabled');
+            }
+            
+            let currentSrc = iframe.src;
+            if(currentSrc && currentSrc !== window.location.href) iframe.src = currentSrc;
+        }
+
+        function playStream(btnElement) {
+            let link = btnElement.getAttribute('data-link');
+            document.getElementById('videoPlayer').src = link;
+            document.getElementById('closeVid').style.display = 'inline-block';
+            document.getElementById('externalVid').style.display = 'inline-block';
+            document.getElementById('copyLinkBtn').style.display = 'inline-block';
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+        }
+
+        function closePlayer() {
+            document.getElementById('videoPlayer').src = "";
+            document.getElementById('closeVid').style.display = 'none';
+            document.getElementById('externalVid').style.display = 'none';
+            document.getElementById('copyLinkBtn').style.display = 'none';
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        }
+
+        function openExternal() {
+            let currentLink = document.getElementById('videoPlayer').src;
+            if (currentLink && currentLink.trim() !== "" && currentLink !== window.location.href) {
+                window.open(currentLink, '_blank'); 
+            } else {
+                alert("مفيش بث شغال حالياً!");
+            }
+        }
+
+        function copyCurrentLink() {
+            let currentLink = document.getElementById('videoPlayer').src;
+            if (currentLink && currentLink.trim() !== "" && currentLink !== window.location.href) {
+                let textArea = document.createElement("textarea");
+                textArea.value = currentLink;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert("تم نسخ رابط القناة بنجاح!");
+            }
+        }
+
+        function openModal() {
+            populateSelectMenu(); 
+            document.getElementById('settingsModal').style.display = 'flex';
+            loadButtonData();
+        }
+
+        function closeModal() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function loadButtonData() {
+            let id = document.getElementById('buttonSelect').value;
+            let btn = document.getElementById(id);
+            if(btn) {
+                document.getElementById('editName').value = btn.innerText;
+                document.getElementById('editLink').value = btn.getAttribute('data-link');
+            }
+        }
+
+        function applyChanges() {
+            let id = document.getElementById('buttonSelect').value;
+            let btn = document.getElementById(id);
+            if(!btn) return;
+            btn.innerText = document.getElementById('editName').value;
+            btn.setAttribute('data-link', document.getElementById('editLink').value);
+            populateSelectMenu();
+            if (btn.classList.contains('active')) playStream(btn);
+            alert("تم التعديل!");
+        }
+
+        function deleteChannel() {
+            let id = document.getElementById('buttonSelect').value;
+            let btn = document.getElementById(id);
+            if(btn && confirm("حذف القناة؟")) {
+                if(btn.classList.contains('active')) closePlayer();
+                btn.remove();
+                populateSelectMenu();
+                alert("تم الحذف!");
+            }
+        }
+
+        function addNewChannel() {
+            let inputLinks = prompt("حط اللينكات هنا:");
+            if (!inputLinks) return;
+            let linksArray = inputLinks.split(/[\s,\n]+/).filter(l => l.trim() !== "");
+            let baseName = prompt("الاسم الأساسي:", "قناة");
+            let timestamp = new Date().getTime();
+            linksArray.forEach((link, index) => {
+                let newBtn = document.createElement("button");
+                newBtn.id = "btn_new_" + timestamp + "_" + index;
+                newBtn.className = "tab-btn";
+                newBtn.setAttribute("data-link", link);
+                newBtn.innerText = linksArray.length > 1 ? `${baseName} ${index + 1}` : baseName;
+                newBtn.setAttribute("onclick", "playStream(this)");
+                document.getElementById("mainTabs").appendChild(newBtn);
+            });
+            populateSelectMenu();
+        }
+
+        function downloadFullFile() {
+            closeModal(); 
+            let content = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            let blob = new Blob([content], { type: 'text/html' });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'my_player.html';
+            a.click();
+        }
+
+        // --- الدالة المعدلة اللي كانت بايظة عندك ---
+        function copyFullCode() {
+            closeModal();
+            let content = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            
+            // إنشاء عنصر نصي وهمي للنسخ لضمان العمل على كل المتصفحات والأنظمة
+            let textArea = document.createElement("textarea");
+            textArea.value = content;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            textArea.style.top = "0";
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                let successful = document.execCommand('copy');
+                if(successful) alert("تم نسخ الكود بالكامل بنجاح! ✅");
+            } catch (err) {
+                alert("عذراً، المتصفح رفض النسخ التلقائي.");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function nextStream() {
+            let tabs = Array.from(document.querySelectorAll('#mainTabs .tab-btn'));
+            let activeIndex = tabs.findIndex(btn => btn.classList.contains('active'));
+            let nextIndex = (activeIndex + 1) % tabs.length; 
+            playStream(tabs[nextIndex]);
+            tabs[nextIndex].scrollIntoView({ behavior: 'smooth', inline: 'center' });
+        }
+
+        function prevStream() {
+            let tabs = Array.from(document.querySelectorAll('#mainTabs .tab-btn'));
+            let activeIndex = tabs.findIndex(btn => btn.classList.contains('active'));
+            let prevIndex = (activeIndex - 1 + tabs.length) % tabs.length; 
+            playStream(tabs[prevIndex]);
+            tabs[prevIndex].scrollIntoView({ behavior: 'smooth', inline: 'center' });
+        }
+
+        function toggleRotation() {
+            document.querySelector('.video-wrapper').classList.toggle('rotated');
+        }
+
+        function playRandomSportsChannel() {
+            const sportsChannels = [
+                { name: "Aflam4You Sport", url: "https://live.aflam4you.net/zremb472.php?vid=5407&aflam_s=1&aflam_w=360&aflam_h=250&aflam_k=11623324" },
+                { name: "Koora Plus 1", url: "https://tv19.koora-plus.top/chtv/ch1.php" },
+                { name: "Koora Plus 2", url: "https://tv19.koora-plus.top/chtv/ch2.php" },
+                { name: "Koora Plus 3", url: "https://tv19.koora-plus.top/chtv/ch3.php" },
+                { name: "Koora Plus 4", url: "https://tv19.koora-plus.top/chtv/ch4.php" }
+            ];
+            let existingLinks = Array.from(document.querySelectorAll('#mainTabs .tab-btn')).map(btn => btn.getAttribute('data-link'));
+            let availableChannels = sportsChannels.filter(channel => !existingLinks.includes(channel.url));
+            if (availableChannels.length === 0) {
+                alert("كل القنوات المتاحة اتضافت قبل كده!");
+                return;
+            }
+            const btn = document.getElementById('autoFetchBtn');
+            btn.innerHTML = "⏳ جاري البحث...";
+            setTimeout(() => {
+                const randomChannel = availableChannels[Math.floor(Math.random() * availableChannels.length)];
+                let newBtn = document.createElement("button");
+                newBtn.id = "btn_auto_" + new Date().getTime();
+                newBtn.className = "tab-btn";
+                newBtn.setAttribute("data-link", randomChannel.url);
+                newBtn.innerText = "⭐ " + randomChannel.name; 
+                newBtn.setAttribute("onclick", "playStream(this)");
+                document.getElementById("mainTabs").appendChild(newBtn);
+                populateSelectMenu();
+                playStream(newBtn);
+                newBtn.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                btn.innerHTML = "⚽ اكتشاف قناة رياضية من النت";
+            }, 500); 
+        }
+    </script>
+
+
+</body></html>
