@@ -107,9 +107,11 @@
             flex-shrink: 0;
         }
 
+        /* الزرار بتاع القناة اللي شغالة حالياً (تم تعديله للأخضر) */
         .tab-btn.active {
-            background-color: #004d4d;
-            border: 1px solid #fff;
+            background-color: #27ae60 !important;
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px rgba(39, 174, 96, 0.8);
         }
 
         /* تنسيقات القنوات أثناء التحديد */
@@ -312,7 +314,7 @@
         .s-close-btn { background-color: #c0392b; border: 1px solid #ff7675; }
 
     </style>
-<style>:is([id*='google_ads_iframe'],[id*='taboola-'],.taboolaHeight,.taboola-placeholder,#top-ad,#credential_picker_container,#credentials-picker-container,#credential_picker_iframe,[id*='google-one-tap-iframe'],#google-one-tap-popup-container,.google-one-tap__module,.google-one-tap-modal-div,#amp_floatingAdDiv,#ez-content-blocker-container) {display:none!important;min-height:0!important;height:0!important;}</style></head>
+<style>:is([id*='google_ads_iframe'],[id*='taboola-'],.taboolaHeight,.taboola-placeholder,#top-ad,#credential_picker_container,#credentials-picker-container,#credential_picker_iframe,[id*='google-one-tap-iframe'],#google-one-tap-popup-container,.google-one-tap__module,.google-one-tap-modal-div,#amp_floatingAdDiv,#ez-content-blocker-container) {display:none!important;min-height:0!important;height:0!important;}</style><style>:is([id*='google_ads_iframe'],[id*='taboola-'],.taboolaHeight,.taboola-placeholder,#top-ad,#credential_picker_container,#credentials-picker-container,#credential_picker_iframe,[id*='google-one-tap-iframe'],#google-one-tap-popup-container,.google-one-tap__module,.google-one-tap-modal-div,#amp_floatingAdDiv,#ez-content-blocker-container) {display:none!important;min-height:0!important;height:0!important;}</style></head>
 <body>
 
     <div class="player-header">
@@ -328,6 +330,8 @@
                 <button id="externalVid" class="external-top-btn" onclick="openExternal()" style="display: none;">خارجي ↗</button>
                 <button id="copyLinkBtn" class="copy-top-btn" onclick="copyCurrentLink()" style="display: none;">نسخ الرابط 🔗</button>
                 
+                <button id="autoSwitchBtn" class="nav-btn" onclick="toggleAutoSwitch()" style="background-color: #e67e22;">تقليب تلقائي ⏱️</button>
+
                 <button class="nav-btn" onclick="prevStream()">الســـــــــــــــــــابق ⏮️</button>
                 <button class="nav-btn" onclick="nextStream()">التـــــــــــــــــــــــــــــــــــــــــــــالي ⏭️</button>
                 <button class="rotate-btn" onclick="toggleRotation()">تدوير 🔄</button>
@@ -1181,6 +1185,23 @@
         // --- متغيرات ونظام التحديد ---
         let isSelectionMode = false;
         let autoSkipTimer = null; // المضاف حديثاً للانتقال التلقائي
+        let autoSwitchInterval = null; // المتغير الجديد للتقليب التلقائي المخصص
+
+        function toggleAutoSwitch() {
+            let btn = document.getElementById('autoSwitchBtn');
+            if (autoSwitchInterval) {
+                clearInterval(autoSwitchInterval);
+                autoSwitchInterval = null;
+                btn.style.backgroundColor = '#e67e22'; // لون مقفول
+                btn.innerText = 'تقليب تلقائي ⏱️';
+            } else {
+                autoSwitchInterval = setInterval(() => {
+                    nextStream();
+                }, 6000); // 6 ثواني
+                btn.style.backgroundColor = '#27ae60'; // لون شغال (أخضر)
+                btn.innerText = 'التقليب شغال ⏱️';
+            }
+        }
 
         function toggleSelectionMode() {
             isSelectionMode = !isSelectionMode;
