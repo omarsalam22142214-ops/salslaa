@@ -20,7 +20,7 @@
             overflow: hidden; 
         }
 
-        /* شريط التحكم العلوي للمشغل - تم تعديله ليكون شفاف بالكامل */
+        /* شريط التحكم العلوي للمشغل - شفاف */
         .player-header {
             position: absolute; 
             top: 0;
@@ -28,10 +28,10 @@
             width: 100%;
             box-sizing: border-box;
             z-index: 10000;
-            background-color: transparent; /* خلفية شفافة */
-            backdrop-filter: none; /* إلغاء الغلوشة */
+            background-color: transparent; 
+            backdrop-filter: none; 
             -webkit-backdrop-filter: none;
-            border-bottom: none; /* إزالة الخط السفلي */
+            border-bottom: none; 
             padding: 8px 10px;
             display: flex;
             flex-direction: column;
@@ -190,6 +190,19 @@
             background-color: #8e44ad !important;
             border: 2px dashed #f1c40f;
             transform: scale(0.95);
+        }
+
+        /* ستايلات ألوان الفحص (شغال أو فاصل) */
+        .tab-btn.channel-working {
+            background-color: rgba(39, 174, 96, 0.8) !important;
+            color: white !important;
+            border: 1px solid #2ecc71 !important;
+        }
+        
+        .tab-btn.channel-broken {
+            background-color: rgba(192, 57, 43, 0.8) !important;
+            color: white !important;
+            border: 1px solid #e74c3c !important;
         }
 
         /* التصغير الافتراضي 50% */
@@ -389,6 +402,7 @@
                 <button class="admin-btn" onclick="openModal()">⚙️ التعديل</button>
                 <button class="admin-btn" style="background-color: rgba(44, 62, 80, 0.9); color: white;" onclick="openBulkEditModal()">📝 تعديل الكود</button>
                 <button id="selectModeBtn" class="admin-btn" style="background-color: rgba(142, 68, 173, 0.9); color: white;" onclick="toggleSelectionMode()">☑️ تحديد القنوات</button>
+                <button id="checkChannelsBtn" class="admin-btn" style="background-color: #3498db; color: white;" onclick="checkAllChannels()">🔍 فحص القنوات</button>
             </div>
             
             <div class="nav-buttons">
@@ -2261,6 +2275,51 @@
                 }
             }
         }
+
+        // ====== دوال فحص القنوات الجديدة ======
+        async function checkAllChannels() {
+            let buttons = document.querySelectorAll('#mainTabs .tab-btn:not(#autoFetchBtn)');
+            if(buttons.length === 0) {
+                alert("مفيش قنوات متسجلة عشان أفحصها!");
+                return;
+            }
+            
+            let checkBtn = document.getElementById('checkChannelsBtn');
+            let originalText = checkBtn.innerText;
+            checkBtn.innerText = '⏳ جاري الفحص...';
+            checkBtn.disabled = true;
+
+            for (let btn of buttons) {
+                let link = btn.getAttribute('data-link');
+                if (!link) continue;
+                
+                btn.style.opacity = '0.5';
+
+                try {
+                    // بيعمل طلب سريع للسيرفر عشان يشوفه هيرد ولا لأ
+                    let response = await fetch(link, { method: 'GET', cache: 'no-store' });
+                    if (response.ok) {
+                        btn.classList.remove('channel-broken');
+                        btn.classList.add('channel-working');
+                    } else {
+                        btn.classList.remove('channel-working');
+                        btn.classList.add('channel-broken');
+                    }
+                } catch (error) {
+                    // لو حصل خطأ في الشبكة أو السيرفر مانع الفحص المباشر (CORS)
+                    btn.classList.remove('channel-working');
+                    btn.classList.add('channel-broken');
+                    btn.title = "قد تكون القناة لا تعمل أو محمية ضد الفحص (CORS)";
+                }
+                
+                btn.style.opacity = '1';
+            }
+            
+            checkBtn.innerText = originalText;
+            checkBtn.disabled = false;
+            alert("تم الانتهاء من فحص القنوات!");
+        }
+        // ======================================
 
         // ====== دوال زرار القفل (باستخدام pointer-events) ======
         let isScreenLocked = false;
