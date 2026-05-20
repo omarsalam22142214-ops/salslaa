@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl"><head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="user-scalable=yes">
+    <meta name="viewport" content="width=1280, user-scalable=yes">
     <title>مشغل البث المباشر</title>
     
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -20,18 +20,18 @@
             overflow: hidden; 
         }
 
-        /* شريط التحكم العلوي للمشغل */
+        /* شريط التحكم العلوي للمشغل - تم تعديله ليكون شفاف بالكامل */
         .player-header {
             position: absolute; 
             top: 0;
             left: 0;
             width: 100%;
             box-sizing: border-box;
-            z-index: 100;
-            background-color: rgba(17, 17, 17, 0.5); 
-            backdrop-filter: blur(8px); 
-            -webkit-backdrop-filter: blur(8px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 10000;
+            background-color: transparent; /* خلفية شفافة */
+            backdrop-filter: none; /* إلغاء الغلوشة */
+            -webkit-backdrop-filter: none;
+            border-bottom: none; /* إزالة الخط السفلي */
             padding: 8px 10px;
             display: flex;
             flex-direction: column;
@@ -77,7 +77,7 @@
             touch-action: manipulation;
         }
 
-        /* ستايل مدخل الثواني الجديد */
+        /* ستايل مدخل الثواني */
         .interval-input-group {
             display: flex;
             align-items: center;
@@ -98,7 +98,7 @@
             font-weight: bold;
         }
 
-        /* ستايل مدخل التشغيل المباشر الجديد */
+        /* ستايل مدخل التشغيل المباشر */
         .direct-input-group {
             display: flex;
             align-items: center;
@@ -123,7 +123,7 @@
             direction: rtl;
         }
 
-        /* ستايل شارات الحالة والجودة */
+        /* شارات الحالة والجودة */
         .status-badge, .quality-badge {
             background: rgba(44, 62, 80, 0.9);
             padding: 4px 8px;
@@ -149,9 +149,10 @@
         .adblock-btn { background-color: rgba(39, 174, 96, 0.9); }
         .adblock-btn.disabled { background-color: rgba(192, 57, 43, 0.9); }
 
+        /* ستايل السيرفرات المربعة */
         .tabs-container {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             overflow-x: auto;
             white-space: nowrap;
             padding-bottom: 5px;
@@ -161,12 +162,12 @@
         .tabs-container::-webkit-scrollbar-thumb { background: rgba(68, 68, 68, 0.8); border-radius: 4px; }
 
         .tab-btn {
-            background-color: rgba(0, 139, 139, 0.9);
-            color: white;
-            border: none;
-            padding: 6px 15px;
+            background-color: transparent;
+            color: #f1c40f; 
+            border: 1px solid #ccc;
+            padding: 8px 20px;
             font-size: 14px;
-            border-radius: 4px;
+            border-radius: 0px; 
             cursor: pointer;
             font-weight: bold;
             transition: 0.3s;
@@ -174,25 +175,31 @@
             touch-action: manipulation;
         }
 
+        .tab-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
         .tab-btn.active {
-            background-color: #27ae60 !important;
-            border: 2px solid #fff;
-            box-shadow: 0 0 10px rgba(39, 174, 96, 0.8);
+            background-color: #c0392b !important; 
+            color: white !important;
+            border: 1px solid white;
+            box-shadow: none; 
         }
 
         .tab-btn.selected-channel {
             background-color: #8e44ad !important;
             border: 2px dashed #f1c40f;
-            box-shadow: 0 0 10px rgba(142, 68, 173, 0.8);
             transform: scale(0.95);
         }
 
+        /* التصغير الافتراضي 50% */
         .video-wrapper {
             position: relative;
             width: 100%;
             flex: 1; 
             background-color: #000;
-            --zoom-level: 1; /* المتغير المسؤول عن الزوم */
+            --zoom-level: 0.5; 
+            overflow: hidden; 
         }
 
         .video-wrapper iframe,
@@ -213,11 +220,9 @@
             left: 50%;
             width: calc(100vh - 75px);
             height: 100vw;
-            /* دمج الزوم مع التدوير عشان ميحصلش أي خطأ في الأبعاد */
             transform: translate(-50%, -50%) rotate(90deg) scale(var(--zoom-level));
         }
 
-        /* إخفاء المشغلات افتراضياً حتى يتم الاختيار */
         #iframePlayer, #videoPlayer {
             display: none;
         }
@@ -229,7 +234,7 @@
             background-color: rgba(0, 0, 0, 0.9);
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 11000; 
         }
 
         .modal-content {
@@ -319,7 +324,7 @@
             gap: 10px;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
+            z-index: 12000;
             transition: bottom 0.3s ease-in-out;
             box-shadow: 0 -5px 15px rgba(0,0,0,0.8);
             flex-wrap: wrap;
@@ -336,12 +341,11 @@
         .s-del-btn { background-color: #e74c3c; }
         .s-close-btn { background-color: #c0392b; border: 1px solid #ff7675; }
 
-        /* ستايل زر إخفاء وإظهار الشريط الجديد */
         .toggle-header-btn {
             position: fixed;
             top: 10px;
             left: 10px;
-            z-index: 9999;
+            z-index: 10001;
             background-color: rgba(52, 73, 94, 0.8);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
@@ -356,6 +360,22 @@
             box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
         .toggle-header-btn:hover { background-color: rgba(44, 62, 80, 0.9); }
+
+        /* ====== ستايل زرار القفل ====== */
+        .screen-lock-btn {
+            background-color: #d35400; 
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            touch-action: manipulation;
+        }
+        .screen-lock-btn:hover { background-color: #e67e22; }
+        .screen-lock-btn.locked { background-color: rgba(231, 76, 60, 0.9); border: 1px solid #fff; }
 
     </style>
 <style>:is([id*='google_ads_iframe'],[id*='taboola-'],.taboolaHeight,.taboola-placeholder,#top-ad,#credential_picker_container,#credentials-picker-container,#credential_picker_iframe,[id*='google-one-tap-iframe'],#google-one-tap-popup-container,.google-one-tap__module,.google-one-tap-modal-div,#amp_floatingAdDiv,#ez-content-blocker-container) {display:none!important;min-height:0!important;height:0!important;}</style><style>:is([id*='google_ads_iframe'],[id*='taboola-'],.taboolaHeight,.taboola-placeholder,#top-ad,#credential_picker_container,#credentials-picker-container,#credential_picker_iframe,[id*='google-one-tap-iframe'],#google-one-tap-popup-container,.google-one-tap__module,.google-one-tap-modal-div,#amp_floatingAdDiv,#ez-content-blocker-container) {display:none!important;min-height:0!important;height:0!important;}</style></head>
@@ -387,7 +407,9 @@
 
                 <button id="zoomInBtn" class="nav-btn" style="background-color: #34495e;" title="تكبير">تكبير ➕</button>
                 <button id="zoomOutBtn" class="nav-btn" style="background-color: #34495e;" title="تصغير">تصغير ➖</button>
-                <button id="zoomResetBtn" class="nav-btn" style="background-color: #7f8c8d; color: white;" title="الوضع الافتراضي">100%</button>
+                
+                <button id="zoomResetBtn" class="nav-btn" style="background-color: #7f8c8d; color: white;" title="الحجم المُصغر">50%</button>
+                <button id="zoom100Btn" class="nav-btn" style="background-color: #95a5a6; color: white;" title="الحجم الطبيعي">100%</button>
                 
                 <button id="muteBtn" class="nav-btn" style="background-color: #2c3e50;" onclick="toggleMute()">🔊 الصوت</button>
                 <button id="fullscreenBtn" class="nav-btn" style="background-color: #2c3e50;" onclick="toggleFullScreen()">🔲 ملء الشاشة</button>
@@ -402,6 +424,7 @@
                 <button class="nav-btn" onclick="nextStream()">التـــــــــــــــــــــــــــــــــــــــــــــالي ⏭️</button>
                 <button class="rotate-btn" onclick="toggleRotation()">تدوير 🔄</button>
                 
+                <button id="screenLockBtn" class="screen-lock-btn" onclick="toggleScreenLock()" title="قفل الشاشة">🔓 قفل الشاشة</button>
                 <button class="adblock-btn deny-btn" onclick="toggleDenyPopups()">🚫 Deny Popups (مفعل)</button>
             </div>
 
@@ -1530,7 +1553,6 @@
 <button id="btn_auto_1775771684122" class="tab-btn" data-link="https://live.aflam4you.net/zremb472.php?vid=5407&amp;aflam_s=1&amp;aflam_w=360&amp;aflam_h=250&amp;aflam_k=11623324" onclick="playStream(this)">⭐ Aflam4You Sport</button>
 <button id="btn_auto_1775771689636" class="tab-btn" data-link="https://tv19.koora-plus.top/chtv/ch3.php" onclick="playStream(this)">⭐ Koora Plus 3</button>
 <button id="btn_auto_1775771694347" class="tab-btn" data-link="https://tv19.koora-plus.top/chtv/ch4.php" onclick="playStream(this)">⭐ Koora Plus 4</button>
-
 <button id="btn_new_1777746738286_0" class="tab-btn" data-link="https://plir.bein4kora.com/albaplayer/1bnnn1/" data-open="internal" onclick="playStream(this)">+ 1</button>
 <button id="btn_new_1777746738286_1" class="tab-btn" data-link="https://plir.bein4kora.com/albaplayer/1bnnn2/" data-open="internal" onclick="playStream(this)">+ 2</button>
 <button id="btn_new_1777746738286_2" class="tab-btn" data-link="https://plir.bein4kora.com/albaplayer/1bnnn3/" data-open="internal" onclick="playStream(this)">+ 3</button>
@@ -1552,7 +1574,7 @@
 </div>
     </div>
 
-    <div class="video-wrapper" style="--zoom-level: 1;">
+    <div class="video-wrapper" style="--zoom-level: 0.5;">
         <iframe id="iframePlayer" src="" allowfullscreen="" style="display: none;" sandbox="allow-scripts allow-same-origin"></iframe>
         <video id="videoPlayer" controls="" autoplay="" playsinline="" style="display: none;"></video>
     </div>
@@ -1618,7 +1640,9 @@
     </div>
 
     <script>
-        // === التعديل الجديد: إجبار أي نافذة جديدة أو رابط خارجي إنه يفتح جوه المشغل ===
+        // حفظ دالة الفتح الأصلية
+        const originalWindowOpen = window.open;
+
         window.open = function(url) {
             if (url) {
                 let tempBtn = document.createElement("button");
@@ -1645,6 +1669,9 @@
         let autoSwitchInterval = null; 
         let remainingSeconds = 20; 
         let activeLinkType = 'iframe'; 
+        
+        let currentZoom = 0.5; 
+        const zoomStep = 0.1;
 
         // === دوال التحكم في حالة البث والجودة ===
         function updateStreamStatus(state) {
@@ -1664,7 +1691,6 @@
             }
         }
 
-        // ربط مشغل الفيديو بأحداث الحالة
         document.addEventListener("DOMContentLoaded", () => {
             let video = document.getElementById('videoPlayer');
             let iframe = document.getElementById('iframePlayer');
@@ -1693,29 +1719,32 @@
             playStream(tempBtn);
         }
 
-        let currentZoom = 1;
-        const zoomStep = 0.1;
-
         document.getElementById('zoomInBtn').addEventListener('click', () => {
             currentZoom += zoomStep;
             updateZoom();
         });
 
         document.getElementById('zoomOutBtn').addEventListener('click', () => {
-            if (currentZoom > 0.3) { 
+            if (currentZoom > 0.1) { 
                 currentZoom -= zoomStep;
                 updateZoom();
             }
         });
 
+        // زرار الـ 50% بيرجع الحجم لـ 0.5
         document.getElementById('zoomResetBtn').addEventListener('click', () => {
-            currentZoom = 1;
+            currentZoom = 0.5; 
+            updateZoom();
+        });
+
+        // زرار الـ 100% بيكبر الحجم لـ 1.0
+        document.getElementById('zoom100Btn').addEventListener('click', () => {
+            currentZoom = 1; 
             updateZoom();
         });
 
         function updateZoom() {
             document.querySelector('.video-wrapper').style.setProperty('--zoom-level', currentZoom);
-            document.getElementById('zoomResetBtn').innerText = Math.round(currentZoom * 100) + '%';
         }
 
         function updateAutoSwitchInterval() {
@@ -1934,18 +1963,18 @@
             document.getElementById('directLinkInput').value = originalLink;
 
             if (target === 'external') {
-                window.open(originalLink, '_blank');
+                originalWindowOpen(originalLink, '_blank');
                 return; 
             }
 
-            // تصفير وتجهيز شارات الحالة
             updateStreamStatus('loading');
             let qualityBadge = document.getElementById('streamQualityBadge');
             qualityBadge.style.display = 'none';
             qualityBadge.innerHTML = '📺 --';
 
-            currentZoom = 1;
+            currentZoom = 0.5;
             updateZoom();
+            
             document.getElementById('muteBtn').innerText = '🔊 الصوت';
 
             let iframe = document.getElementById('iframePlayer');
@@ -1975,7 +2004,6 @@
                     window.hls.loadSource(linkToPlay);
                     window.hls.attachMedia(video);
                     
-                    // قراءة الجودة عند توفرها أو تغيرها
                     window.hls.on(Hls.Events.LEVEL_SWITCHED, function(event, data) {
                         let level = window.hls.levels[data.level];
                         if(level && level.height) {
@@ -1984,7 +2012,6 @@
                         }
                     });
 
-                    // مراقبة الأخطاء
                     window.hls.on(Hls.Events.ERROR, function(event, data) {
                         if (data.fatal) {
                             updateStreamStatus('error');
@@ -2052,10 +2079,10 @@
 
         function openExternal() {
             let activeBtn = document.querySelector('.tab-btn.active');
-            if (activeBtn) window.open(activeBtn.getAttribute('data-link'), '_blank');
+            if (activeBtn) originalWindowOpen(activeBtn.getAttribute('data-link'), '_blank');
             else {
                 let directLink = document.getElementById('directLinkInput').value.trim();
-                if(directLink) window.open(directLink, '_blank');
+                if(directLink) originalWindowOpen(directLink, '_blank');
             }
         }
 
@@ -2215,24 +2242,46 @@
         }
 
         function toggleFullScreen() {
-            let wrapper = document.querySelector('.video-wrapper');
+            let doc = document.documentElement; 
             if (!document.fullscreenElement) {
-                if (wrapper.requestFullscreen) {
-                    wrapper.requestFullscreen();
-                } else if (wrapper.webkitRequestFullscreen) { /* Safari */
-                    wrapper.webkitRequestFullscreen();
-                } else if (wrapper.msRequestFullscreen) { /* IE11 */
-                    wrapper.msRequestFullscreen();
+                if (doc.requestFullscreen) {
+                    doc.requestFullscreen();
+                } else if (doc.webkitRequestFullscreen) { 
+                    doc.webkitRequestFullscreen();
+                } else if (doc.msRequestFullscreen) { 
+                    doc.msRequestFullscreen();
                 }
             } else {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) { /* Safari */
+                } else if (document.webkitExitFullscreen) { 
                     document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) { /* IE11 */
+                } else if (document.msExitFullscreen) { 
                     document.msExitFullscreen();
                 }
             }
         }
+
+        // ====== دوال زرار القفل (باستخدام pointer-events) ======
+        let isScreenLocked = false;
+        function toggleScreenLock() {
+            isScreenLocked = !isScreenLocked;
+            let lockBtn = document.getElementById('screenLockBtn');
+            let videoWrapper = document.querySelector('.video-wrapper');
+            
+            if (isScreenLocked) {
+                videoWrapper.style.pointerEvents = 'none'; 
+                lockBtn.innerHTML = '🔒 فك القفل';
+                lockBtn.classList.add('locked');
+            } else {
+                videoWrapper.style.pointerEvents = 'auto'; 
+                lockBtn.innerHTML = '🔓 قفل الشاشة';
+                lockBtn.classList.remove('locked');
+            }
+        }
+        // ====================================================================
+
     </script>
+
+
 </body></html>
